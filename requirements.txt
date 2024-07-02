@@ -3,5 +3,4 @@ pandas
 torch
 transformers
 mindsdb_sdk
-sqlite3
 
