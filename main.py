@@ -10,7 +10,7 @@ import torch
 
 
 # Initializing the  NLP pipelines
-sentiment_analyzer = pipeline('sentiment-analysis')
+sentiment_analyzer = pipeline('sentiment-analysis',model='model="distilbert-base-uncased-finetuned-sst-2-english')
 tokenizer = AutoTokenizer.from_pretrained("dbmdz/bert-large-cased-finetuned-conll03-english")
 model = AutoModelForTokenClassification.from_pretrained("dbmdz/bert-large-cased-finetuned-conll03-english")
 ner = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
