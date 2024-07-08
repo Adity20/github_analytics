@@ -181,7 +181,7 @@ def create_mindsdb_project_and_train(username, repo_name):
     server.ml_engines.create(
         "minds_endpoint_engine",
         "minds_endpoint",
-        connection_data={"minds_endpoint_api_key": '87c09b70b59d7f096e3332f8dfabea230a343556e3ee59d2000ed49f36d4faf0'},
+        connection_data={"minds_endpoint_api_key": 'key'},
     )
     project = server.create_project('github_analytics')
     project = server.get_project('github_analytics')
