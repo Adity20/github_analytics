@@ -7,7 +7,8 @@ import mindsdb_sdk
 import re
 import sqlite3
 import torch
-
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Initializing the  NLP pipelines
 sentiment_analyzer = pipeline('sentiment-analysis',model='distilbert-base-uncased-finetuned-sst-2-english')
@@ -18,6 +19,7 @@ qa_pipeline = pipeline("question-answering", model="distilbert-base-cased-distil
 
 # connect to the mindsdb_sdk
 server = mindsdb_sdk.connect()
+
 
 def fetch_user_repositories(username):
     url = f'https://api.github.com/users/{username}/repos'
@@ -47,6 +49,7 @@ def fetch_repository_data(username, repo_name):
         st.error('Failed to fetch repository data. Please check the repository name and try again.')
         return None
 
+
 def fetch_commit_messages(username, repo_name):
     url = f'https://api.github.com/repos/{username}/{repo_name}/commits'
     response = requests.get(url)
@@ -57,6 +60,19 @@ def fetch_commit_messages(username, repo_name):
     else:
         st.error('Failed to fetch commit messages.')
         return []
+
+
+
+def plot_commit_history(commit_messages):
+    dates = [commit['commit']['author']['date'] for commit in commit_messages]
+    commit_dates = pd.to_datetime(dates).date
+    commit_counts = pd.Series(commit_dates).value_counts().sort_index()
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=commit_counts.index, y=commit_counts.values, mode='lines+markers', name='Commits'))
+    fig.update_layout(title='Commit History', xaxis_title='Date', yaxis_title='Number of Commits')
+    st.plotly_chart(fig)
+
 
 def fetch_issues(username, repo_name):
     url = f'https://api.github.com/repos/{username}/{repo_name}/issues'
@@ -139,12 +155,13 @@ def provide_recommendations(issues):
     return recommendations
 
 def create_mindsdb_project_and_train(username, repo_name):
-    conn = sqlite3.connect("github_data.db")
+    conn = sqlite3.connect("githubdata.db")
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS issues (
                       id INTEGER PRIMARY KEY, 
                       title TEXT, 
                       body TEXT, 
+                      solution TEXT,
                       state TEXT, 
                       created_at TEXT, 
                       updated_at TEXT)''')
@@ -153,9 +170,9 @@ def create_mindsdb_project_and_train(username, repo_name):
     
     # Insert issue data into SQLite database
     for issue in issues_data:
-        cursor.execute('''INSERT OR IGNORE INTO issues (id, title, body, state, created_at, updated_at)
-                          VALUES (?, ?, ?, ?, ?, ?)''', 
-                          (issue['id'], issue['title'], issue.get('body', ''), issue['state'], 
+        cursor.execute('''INSERT OR IGNORE INTO issues (id, title, body, solution, state, created_at, updated_at)
+                          VALUES (?, ?, ?, ?, ?, ?, ?)''', 
+                          (issue['id'], issue['title'], issue.get('body', ''), issue.get('solution', ''), issue['state'], 
                            issue['created_at'], issue['updated_at']))
     
     conn.commit()
@@ -164,20 +181,26 @@ def create_mindsdb_project_and_train(username, repo_name):
     server.ml_engines.create(
         "minds_endpoint_engine",
         "minds_endpoint",
-        connection_data={"minds_endpoint_api_key": 'API_KEY_HERE'},
+        connection_data={"minds_endpoint_api_key": '87c09b70b59d7f096e3332f8dfabea230a343556e3ee59d2000ed49f36d4faf0'},
     )
-    project = server.create_project(name='github_analytics', from_data="SELECT * FROM issues")
+    project = server.create_project('github_analytics')
     project = server.get_project('github_analytics')
     project.models.create(
-        name="issue_priority",
-        predict="state",
+        name="issue_solution",
+        predict="solution",
         engine="minds_endpoint_engine",
         max_tokens=512,
-        prompt_template="Generate the state",
+        prompt_template="Generate the solution",
     )
-    github_data = project.models.get('issue_priority')
-    github_data.predict('state')
 
+def predict_issue_solution(issue_description):
+    conn = sqlite3.connect("github_data.db")
+    project = server.get_project('github_analytics')
+    model = project.models.get('issue_solution')
+    query_data = pd.DataFrame({'description': [issue_description]})
+    predictions = model.predict(data=query_data)
+    conn.close()
+    return predictions
 
 st.set_page_config(page_title='GitHub Analytics Dashboard', layout='wide')
 
@@ -202,7 +225,7 @@ if username:
             st.subheader('Repository Metrics')
             metrics_df = pd.DataFrame(repo_data.items(), columns=['Metric', 'Count']).iloc[2:]
             st.bar_chart(metrics_df.set_index('Metric'))
-
+            
             commit_messages = fetch_commit_messages(username, repo_name)
             if commit_messages:
                 st.subheader('Commit Messages Analysis')
@@ -221,7 +244,7 @@ if username:
                 sentiments = analyze_sentiment(commit_messages)
                 sentiment_df = pd.DataFrame(sentiments)
                 st.dataframe(sentiment_df)
-
+            
             issues = fetch_issues(username, repo_name)
             if issues:
                 st.subheader('Issue Reporting Trends')
@@ -256,18 +279,12 @@ if username:
                 })
                 st.dataframe(recommendations_df)
 
-                # # MindsDB integration for predictive analytics
-                # st.subheader('MindsDB Predictions')
-                # create_mindsdb_project_and_train(username,repo_name)
-                # # Assuming you have a trained model, you can use it to make predictions
-                # conn = sqlite3.connect("github_data.db")
-                # project = server.get_project('github_analytics')
-                # project.create_model('issue_priority', model_type='predictor')
-                # github_data = project.models.get('issue_priority')
-                # issue_descriptions = pd.read_sql_query("SELECT title || '. ' || body AS description FROM issues", conn)
-                # predictions = github_data.predict(predictor_name='issue_priority', data=issue_descriptions)
-                # predictions_df = pd.DataFrame(predictions)
-                # st.dataframe(predictions_df)
+                create_mindsdb_project_and_train(username, repo_name)
+
+                for issue in issues:
+                    issue_description = issue['title'] + ". " + issue.get('body', '')
+                    solution = predict_issue_solution(issue_description)
+                    st.write(f"Predicted Solution for Issue '{issue['title']}': {solution}")
     else:
         # Fetch and display user overview data
         overview_data = fetch_user_overview(username)
