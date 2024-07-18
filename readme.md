@@ -3,13 +3,16 @@
 🌟 Welcome to the GitHub Analytics Dashboard! This project provides detailed analytics about GitHub user repositories and activities using advanced NLP techniques and predictive analytics with MindsDB.
 
 ## Table of Contents
-
+- [Demo](#demo)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
+
+
+## Demo
 
 ## Features
 
