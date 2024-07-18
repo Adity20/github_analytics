@@ -14,7 +14,7 @@
 
 ## Demo
 
-<iframe width="560" height="315" src="https://www.youtube.com/watch?v=HqKJo1kIZoU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+https://github.com/user-attachments/assets/dc068cf2-42e1-4582-b516-035cb506854c
 
 ## Features
 
