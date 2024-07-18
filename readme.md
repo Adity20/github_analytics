@@ -13,7 +13,9 @@
 
 
 ## Demo
-https://www.youtube.com/watch?v=HqKJo1kIZoU
+
+<iframe width="560" height="315" src="https://www.youtube.com/watch?v=HqKJo1kIZoU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Features
 
 - **User Overview**: Displays detailed information about a GitHub user, including their repositories, followers, and following counts.
