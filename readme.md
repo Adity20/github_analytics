@@ -13,7 +13,7 @@
 
 
 ## Demo
-<video controls src="https://www.youtube.com/watch?v=HqKJo1kIZoU" title="Title"></video>
+https://www.youtube.com/watch?v=HqKJo1kIZoU
 ## Features
 
 - **User Overview**: Displays detailed information about a GitHub user, including their repositories, followers, and following counts.
