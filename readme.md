@@ -13,7 +13,7 @@
 
 
 ## Demo
-
+<video controls src="GitHub Analytics Dashboard - Brave 2024-07-15 11-33-43.mp4" title="Title"></video>
 ## Features
 
 - **User Overview**: Displays detailed information about a GitHub user, including their repositories, followers, and following counts.
